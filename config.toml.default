@@ -1,0 +1,11 @@
+# REQUIRED
+# telegram bot token to use
+token = "1234567890okijhgfdsxcvbnjyt"
+
+# sqlite3 database filename
+database_name = "bot.db"
+
+# OPTIONAL
+# proxy to use to connect to telegram. comment this line
+# if you don't want to use a proxy
+# proxy = "socks5://localhost:9090" 
