@@ -20,9 +20,23 @@ class menuCommandHandler(generalCommandHandlerClass):
     async def menu(self, update, context):
         if "is_authorized" not in context.user_data \
         or not context.user_data["is_authorized"]:
-            await update.message.reply_text(f"you are not logged in! please login with /start")    
+            await update.message.reply_text(f"you are not signed in! please sign in with /start")    
             return
         interface = context.user_data["interface"]
         if not interface.menu:
             interface.generateMenu()
         await update.message.reply_text(f"here's your menu:\n{interface.menu}")
+
+class signoutCommandHandler(generalCommandHandlerClass):   
+    def __init__(self, database):
+        super().__init__(database, "signout")
+
+    async def signout(self, update, context):
+        if "is_authorized" not in context.user_data \
+        or not context.user_data["is_authorized"]:
+            await update.message.reply_text(f"you are not signed in! please sign in with /start")
+        
+        self.database.delete_user(context.user_data["user_id"])
+        context.user_data.clear()
+
+        await update.message.reply_text(f"signout success! to sign in again use /start")    

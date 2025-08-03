@@ -1,2 +1,2 @@
 from . import signin
-from .commands import menuCommandHandler
+from .commands import menuCommandHandler, signoutCommandHandler

@@ -29,7 +29,7 @@ class handlerClass(object):
 
     async def start(self, update, context):
         if "user_id" in context.user_data:
-            await update.message.reply_text(f"login success! please use the commands:\n/menu")
+            await update.message.reply_text(f"sign in success! please use the commands:\n/menu")
             return ConversationHandler.END
         
         context.user_data["user_id"] = update.message.chat.id
@@ -38,7 +38,7 @@ class handlerClass(object):
         
         if user := self.database.get_user(update.message.chat.id):
 
-            await update.message.reply_text(f"login success! please use the commands:\n/menu")
+            await update.message.reply_text(f"sign in success! please use the commands:\n/menu")
             interface = self.interfaceGenerator(
                 username=user["self_username"],
                 password=user["self_password"],
@@ -78,6 +78,6 @@ class handlerClass(object):
                 cookie=json.dumps(interface.http_client.getHttpClient().cookies.get_dict())
             )
             context.user_data["is_authorized"] = True
-            await update.message.reply_text(f"login success! please use the commands:\n/menu")
+            await update.message.reply_text(f"sign in success! please use the commands:\n/menu")
 
         return ConversationHandler.END
