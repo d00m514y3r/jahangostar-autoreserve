@@ -5,14 +5,18 @@ from telegram.ext import (
     # filters
 )
 
-class menuCommandHandler(object):   
-    def __init__(self, database):
+class generalCommandHandlerClass(object):
+    def __init__(self, database, command):
         self.database = database
-        self.handler = CommandHandler("menu", self.menu)
-
+        self.handler = CommandHandler(command, getattr(self, command))
+    
     def getHandler(self):
         return self.handler
-    
+
+class menuCommandHandler(generalCommandHandlerClass):   
+    def __init__(self, database):
+        super().__init__(database, "menu")
+
     async def menu(self, update, context):
         interface = context.user_data["interface"]
         if not interface.menu:
