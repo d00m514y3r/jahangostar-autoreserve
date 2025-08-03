@@ -1,9 +1,7 @@
-from .tools import *
 import requests
-import json
 import logging
+from .tools import get_anti_forgery
 from bs4 import BeautifulSoup as soup
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +23,9 @@ class authenticatedClientGenerator(object):
         login = self.http_client.get(f"{self.endpoint}/api/v0/Credit")
         result = False
         try:
-            print(len(login.text))
             int(login.text)
             result = True
         except Exception as e:
-            print(e)
             result = False
         return {"ok": result, "result": login}
     def login(self, cookie={}):
@@ -48,7 +44,7 @@ class authenticatedClientGenerator(object):
         
         self.http_client.cookies.clear()
         
-        # if here, login with cookie in static file failed. trying username and password
+        # if here, login with cookie in database failed. trying username and password
         
         check_login = self.isLoggedIn()
         initial_request = check_login["result"]
@@ -66,29 +62,16 @@ class authenticatedClientGenerator(object):
 
         input_list = soup(login.text, 'html.parser').find_all("input")
         next_form = {x.get("name"):x.get("value") for x in input_list}
-
-        self.http_client.post(self.endpoint, data=next_form)
-        self.http_client.post(self.endpoint, data=next_form)
-        self.http_client.post(self.endpoint, data=next_form)
-        self.http_client.get(self.endpoint)
-        self.http_client.get(self.endpoint)
-        self.http_client.get(self.endpoint)
-
-        login_result = self.isLoggedIn()
-
-        if login_result["ok"]:
-            logger.info("login success")
+        
+        for x in range(3):
+            self.http_client.post(self.endpoint, data=next_form)
+            if self.isLoggedIn()["ok"]:
+                logger.info(f"login success after {x+1} refresh")
+                break
+            logger.info(f"login refresh attempt {x+1}")
         else:
-            raise loginError
             logger.error("login failed")
-    
-    # def storeCookie(self):
-    #     with open("staticLogin.txt", "w") as f:
-    #         json.dump(dict(self.http_client.cookies), f)
-    #     logger.info("saved login cookie into static file")
-    
-    def loadCookie(self):
-        self.http_client.cookies.update(self.cookie)
+            raise self.loginError
     
     def apiPost(self, cmd, **kwargs):
         logger.debug(f"api method {cmd} called: {kwargs}")

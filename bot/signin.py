@@ -65,9 +65,8 @@ class handlerClass(object):
                 password=context.user_data["self_password"],
             )
             context.user_data["interface"] = interface
-        except self.interfaceGenerator.loginError:
-            #TODO
-            pass
+        except Exception as e:
+            await update.message.reply_text(f"sign in failed! please try again with /start")
         else:
             self.database.create_user(
                 user_id=context.user_data["user_id"],

@@ -35,6 +35,7 @@ class signoutCommandHandler(generalCommandHandlerClass):
         if "is_authorized" not in context.user_data \
         or not context.user_data["is_authorized"]:
             await update.message.reply_text(f"you are not signed in! please sign in with /start")
+            return
         
         self.database.delete_user(context.user_data["user_id"])
         context.user_data.clear()
