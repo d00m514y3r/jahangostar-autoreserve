@@ -128,15 +128,16 @@ class Menu(object):
         self.http_client = http_client
         self.raw = self.get_menu(date=date)
         self.Days = [Day(self, http_client, day) for day in self.raw]
+        self.current_date = date if date else self.Days[0].DayDate
     
-    def get_menu(self, date=""):
-        obj = self.http_client.apiGet("Reservation", params={"lastdate": date, "navigation": 0})
+    def get_menu(self, date="", navigation=0):
+        obj = self.http_client.apiGet("Reservation", params={"lastdate": date, "navigation": navigation})
         return obj.json()
     
-    def refresh_menu(self, date=""):
-        obj = self.get_menu()
+    def refresh_menu(self, date="", navigation=0):
+        obj = self.get_menu(date=date, navigation=navigation)
         self.raw = obj
-        self.Days = [Day(self, http_client, day) for day in self.raw]
+        self.Days = [Day(self, self.http_client, day) for day in self.raw]
     
     def getTotalPrice(self):
         return sum([x.getTotalPrice() for x in self.Days])
