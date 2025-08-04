@@ -6,7 +6,7 @@ from telegram.ext import (
 )
 import json
 
-class handlerClass(object):
+class signinHandler(object):
     class state:
         USERNAME = 0
         PASSWORD = 1        
@@ -53,11 +53,17 @@ class handlerClass(object):
             return self.state.USERNAME
 
     async def username(self, update, context):
+        if "/start" in update.message.text:
+            context.user_data.clear()
+            return await self.start(update, context)
         context.user_data["self_username"] = update.message.text
         await update.message.reply_text("please send your password")
         return self.state.PASSWORD
 
     async def password(self, update, context):
+        if "/start" in update.message.text:
+            context.user_data.clear()
+            return await self.start(update, context)
         context.user_data["self_password"] = update.message.text
         try:
             interface = self.interfaceGenerator(
