@@ -1,2 +1,1 @@
-from . import signin
-from .commands import menuCommandHandler, signoutCommandHandler
+from .main import get_bot_application
