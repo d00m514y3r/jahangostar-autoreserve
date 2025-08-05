@@ -15,36 +15,40 @@ class SelfService(object):
 class Food(object):
     def __init__(self, parentMeal, http_client, obj):
         self.http_client = http_client
-        self.parentMeal = parentMeal
+        self.parent_meal = parentMeal
         self.raw = obj
         self.id = obj["FoodId"]
         self.name = obj["FoodName"]
-        self.SelfMenu = {x["SelfId"]: SelfService(self, x) for x in obj["SelfMenu"]}
-        self.self_count = len(self.SelfMenu)
+        self.self_menu = {x["SelfId"]: SelfService(self, x) for x in obj["SelfMenu"]}
+        self.self_count = len(self.self_menu)
         self.food_state = obj["FoodState"]
         self.is_reserved = False
-        if self.parentMeal.is_reserved == True:
-            if self.id == self.parentMeal.raw["LastReserved"][0]["FoodId"]:
+        if self.parent_meal.is_reserved:
+            if self.id == self.parent_meal.raw["LastReserved"][0]["FoodId"]:
                 self.is_reserved = True
         
     def __str__(self):
         if self.is_reserved:
-            return f"  ✅ {self.name}\n{"\n".join(map(str, self.SelfMenu.values()))}"
+            return f"  ✅ {self.name}\n{"\n".join(map(str, self.self_menu.values()))}"
         else:
-            return f"  ❌ {self.name}\n{"\n".join(map(str, self.SelfMenu.values()))}"
+            return f"  ❌ {self.name}\n{"\n".join(map(str, self.self_menu.values()))}"
 
-    
+    def getPrice(self):
+        return max(x.price for x in self.self_menu.values())
+
+    # TODO: delete function or move to Meal
     def is_reserved(self):
-        return self.parentMeal.is_reserved
+        return self.parent_meal.is_reserved
     
+    # TODO: delete function or move to Meal
     def change_reservation(self, count):
-        if self.parentMeal.meal_state != 0 or self.food_state != 2:
+        if self.parent_meal.meal_state != 0 or self.food_state != 2:
             logger.error(f"failed to change reservation status of {self} due to inactive meal" )
             return {"ok": False, "result": "meal not active"}
         
         payload = {
-            "Date":self.parentMeal.date,
-            "MealId":self.parentMeal.meal_id_day,
+            "Date":self.parent_meal.date,
+            "MealId":self.parent_meal.meal_id_day,
             "FoodId":self.id,
             "SelfId":self.self_id,
             "PriceType":1,
@@ -57,6 +61,7 @@ class Food(object):
         msg = res.json()[0]["StateMessage"]
         if "موفقیت" in msg:
             logger.info(f"{self} reservation changed status to {count}")
+            return {"ok": True, "result": res}
         elif "موجودی" in msg:
             logger.error(f"insufficient balance for reservation of {self}")
         else:
@@ -64,25 +69,22 @@ class Food(object):
         return {"ok": False, "result": res}
 
     def reserve(self):
-        if self.is_reserved():
+        if self.is_reserved:
             logger.error(f"attempted to reserve {self} which is already reserved")
             return None
         result = self.change_reservation(1)
         if result["ok"]:
-            self.parentMeal.is_reserved = True
+            self.parent_meal.is_reserved = True
         return result["result"]
     
     def unreserve(self):
-        if not self.is_reserved():
+        if not self.is_reserved:
             logger.error(f"attempted to unreserve {self.id} which is not reserved")
-            return False
-        
+            return None
         result = self.change_reservation(0)
         if result["ok"]:
-            self.parentMeal.is_reserved = False
+            self.parent_meal.is_reserved = False
         return result["result"]
-
-        
 
 class Meal(object):
     def __init__(self, parentDay, http_client, obj):
@@ -98,60 +100,52 @@ class Meal(object):
         self.date = obj["Date"]
         self.is_reserved = bool(obj["LastReserved"])
 
-        self.FoodMenu = {x["FoodId"]:Food(self, http_client, x) for x in obj["FoodMenu"]}
-        self.food_count = len(self.FoodMenu)
+        self.food_menu = {x["FoodId"]:Food(self, http_client, x) for x in obj["FoodMenu"]}
+        self.food_count = len(self.food_menu)
         
         self.service_selected = None
         self.food_selected = None
 
         if self.is_reserved:
-            self.food_selected = self.FoodMenu[obj["LastReserved"][0]["FoodId"]]
-            self.service_selected = self.food_selected.SelfMenu[obj["LastReserved"][0]["SelfId"]]
-    
-    def getTotalPrice(self):
-        return sum([x.price for x in self.FoodMenu])
-    
-    def getRemainingPrice(self):
-        if self.is_reserved or self.meal_state != 0:
-            return 0
-        else:
-            price = sum([x.price if x.food_state == 2 else 0 for x in self.FoodMenu])
-            return price
+            self.food_selected = self.food_menu[obj["LastReserved"][0]["FoodId"]]
+            self.service_selected = self.food_selected.self_menu[obj["LastReserved"][0]["SelfId"]]
 
+    def getPrice(self, check_reservation):
+        if self.food_count:
+            if check_reservation:
+                if self.is_reserved:
+                    return 0
+                return max(x.getPrice() for x in self.food_menu.values())
+            return max(x.getPrice() for x in self.food_menu.values())
+        return 0        
     def __str__(self):
-        return f"⏰ {self.meal_name}\n{"\n".join(map(str, self.FoodMenu.values()))}"            
-    
-    def is_reserved(self):
-        return self.is_reserved
+        return f"⏰ {self.meal_name}\n{"\n".join(map(str, self.food_menu.values()))}"            
     
 class Day(object):
     def __init__(self, parentMenu, http_client, obj):
         self.parentMenu = parentMenu
         self.http_client = http_client
         self.raw = obj
-        self.DayId = obj["DayId"]
-        self.DayDate = obj["DayDate"]
-        self.DayTitle = obj["DayTitle"]
-        self.DayState = obj["DayState"]
-        self.DayStateTitle = obj["DayStateTitle"]
-        self.Meals = [Meal(self, http_client, meal) for meal in obj["Meals"]]
+        self.day_id = obj["DayId"]
+        self.day_date = obj["DayDate"]
+        self.day_title = obj["DayTitle"]
+        self.day_state = obj["DayState"]
+        self.day_state_title = obj["DayStateTitle"]
+        self.meals = [Meal(self, http_client, meal) for meal in obj["Meals"]]
     
-    def getTotalPrice(self):
-        return sum([x.getTotalPrice() for x in self.Meals])
-    
-    def getRemainingPrice(self):
-        return sum([x.getRemainingPrice() for x in self.Meals])
+    def getPrice(self, check_reservation):
+        return sum(x.getPrice(check_reservation) for x in self.meals)
     
     def __str__(self):
-        return f"🗓 {self.DayTitle}، {self.DayDate}\n{"\n".join(map(str, self.Meals))}"
+        return f"🗓 {self.day_title}، {self.day_date}\n{"\n".join(map(str, self.meals))}"
 
 class Menu(object):
     def __init__(self, http_client, date=""):
         self.date = date
         self.http_client = http_client
         self.raw = self.get_menu(date=date)
-        self.Days = [Day(self, http_client, day) for day in self.raw]
-        self.current_date = date if date else self.Days[0].DayDate
+        self.days = [Day(self, http_client, day) for day in self.raw]
+        self.current_date = date if date else self.days[0].day_date
     
     def get_menu(self, date="", navigation=0):
         obj = self.http_client.apiGet("Reservation", params={"lastdate": date, "navigation": navigation})
@@ -160,13 +154,12 @@ class Menu(object):
     def refresh_menu(self, date="", navigation=0):
         obj = self.get_menu(date=date, navigation=navigation)
         self.raw = obj
-        self.Days = [Day(self, self.http_client, day) for day in self.raw]
+        self.days = [Day(self, self.http_client, day) for day in self.raw]
     
-    def getTotalPrice(self):
-        return sum([x.getTotalPrice() for x in self.Days])
-    
-    def getRemainingPrice(self):
-        return sum([x.getRemainingPrice() for x in self.Days])
+    def getPrice(self, check_reservation=False):
+        return sum(x.getPrice(check_reservation=check_reservation) for x in self.days)
     
     def __str__(self):
-        return "\n====================\n".join(map(str, self.Days))
+        return f'{"\n====================\n".join(map(str, self.days))}\n\
+        total price: {self.getPrice()}\n\
+        remaining price: {self.getPrice(check_reservation=True)}'
