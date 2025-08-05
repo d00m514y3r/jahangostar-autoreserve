@@ -38,14 +38,20 @@ class signinHandler(object):
         
         if user := self.database.get_user(update.message.chat.id):
 
-            await update.message.reply_text(f"sign in success! please use the commands:\n/menu")
             interface = self.interfaceGenerator(
                 username=user["self_username"],
                 password=user["self_password"],
                 cookie=json.loads(user["cookie"])
             )
+            if not interface.http_client.cookie_login:
+                self.database.update_cookie(
+                    context.user_data["user_id"], 
+                    json.dumps(interface.http_client.getHttpClient().cookies.get_dict())
+                )
+    
             context.user_data["interface"] = interface
             context.user_data["is_authorized"] = True
+            await update.message.reply_text(f"sign in success! please use the commands:\n/menu")
             return ConversationHandler.END
         
         else:

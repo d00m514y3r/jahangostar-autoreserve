@@ -14,7 +14,7 @@ class authenticatedClientGenerator(object):
         self.username = username
         self.password = password
         self.endpoint = endpoint
-        self.login(cookie=cookie)
+        self.cookie_login = self.login(cookie=cookie)["from_cookie"]
 
     def getHttpClient(self):
         return self.http_client
@@ -35,7 +35,7 @@ class authenticatedClientGenerator(object):
         
             if check_login["ok"]:
                 logger.info("login from previous cookies success")
-                return True
+                return {"ok": True, "from_cookie": True, "result": check_login["result"]}
             else:
                 logger.info("login from previous cookies failed")
             
@@ -67,11 +67,10 @@ class authenticatedClientGenerator(object):
             self.http_client.post(self.endpoint, data=next_form)
             if self.isLoggedIn()["ok"]:
                 logger.info(f"login success after {x+1} refresh")
-                break
+                return {"ok": True, "from_cookie": False}
             logger.info(f"login refresh attempt {x+1}")
-        else:
-            logger.error("login failed")
-            raise self.loginError
+        logger.error("login failed")
+        raise self.loginError
     
     def apiPost(self, cmd, **kwargs):
         logger.debug(f"api method {cmd} called: {kwargs}")

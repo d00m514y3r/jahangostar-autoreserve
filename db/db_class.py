@@ -30,6 +30,10 @@ class dbClass(object):
     def delete_user(self, user_id):
         self.cursor.execute(f"DELETE FROM users WHERE user_id={user_id}")
         self.connection.commit()
+    
+    def update_cookie(self, user_id, cookie):
+        self.cursor.execute(f"UPDATE users SET login_cookie='{cookie}' WHERE user_id={user_id}")
+        self.connection.commit()
 
     def reset_db(self):
         # self.cursor.execute("PRAGMA writable_schema = 1")
