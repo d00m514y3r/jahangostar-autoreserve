@@ -79,6 +79,7 @@ class signinHandler(object):
             context.user_data["interface"] = interface
         except Exception as e:
             await update.message.reply_text(f"sign in failed! please try again with /start")
+            context.user_data.clear()
         else:
             self.database.create_user(
                 user_id=context.user_data["user_id"],
