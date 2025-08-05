@@ -2,6 +2,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+class SelfService(object):
+    def __init__(self, parentFood, obj):
+        self.raw = obj
+        self.id = obj["SelfId"]
+        self.name = obj["SelfName"]
+        self.price = obj["Price"]
+    
+    def __str__(self):
+        return f"    🔺 {self.name} : {self.price}"
+
 class Food(object):
     def __init__(self, parentMeal, http_client, obj):
         self.http_client = http_client
@@ -9,16 +19,20 @@ class Food(object):
         self.raw = obj
         self.id = obj["FoodId"]
         self.name = obj["FoodName"]
-        self.price = obj["SelfMenu"][0]["Price"]
-        self.self_name = obj["SelfMenu"][0]["SelfName"]
-        self.self_id = obj["SelfMenu"][0]["SelfId"]
-        self.self_count = len(obj["SelfMenu"])
+        self.SelfMenu = {x["SelfId"]: SelfService(self, x) for x in obj["SelfMenu"]}
+        self.self_count = len(self.SelfMenu)
         self.food_state = obj["FoodState"]
-        if len(obj["SelfMenu"]) > 1:
-            logger.warn(f"food {self.id} has more than one self service choice. using the first one...")
-    
+        self.is_reserved = False
+        if self.parentMeal.is_reserved == True:
+            if self.id == self.parentMeal.raw["LastReserved"][0]["FoodId"]:
+                self.is_reserved = True
+        
     def __str__(self):
-        return f"{self.name}:{self.price}"
+        if self.is_reserved:
+            return f"  ✅ {self.name}\n{"\n".join(map(str, self.SelfMenu.values()))}"
+        else:
+            return f"  ❌ {self.name}\n{"\n".join(map(str, self.SelfMenu.values()))}"
+
     
     def is_reserved(self):
         return self.parentMeal.is_reserved
@@ -80,13 +94,19 @@ class Meal(object):
         self.day_name = obj["DayName"]
         self.meal_state = obj["MealState"]
         self.meal_state_title = obj["MealStateTitle"]
+        self.meal_name = obj["MealName"]
         self.date = obj["Date"]
         self.is_reserved = bool(obj["LastReserved"])
-        self.FoodMenu = [Food(self, http_client, food) for food in obj["FoodMenu"]]
-        self.food_count = len(self.FoodMenu)
-        if self.food_count > 1:
-            logger.warn(f"food {self.id} has more than one self service choice")
 
+        self.FoodMenu = {x["FoodId"]:Food(self, http_client, x) for x in obj["FoodMenu"]}
+        self.food_count = len(self.FoodMenu)
+        
+        self.service_selected = None
+        self.food_selected = None
+
+        if self.is_reserved:
+            self.food_selected = self.FoodMenu[obj["LastReserved"][0]["FoodId"]]
+            self.service_selected = self.food_selected.SelfMenu[obj["LastReserved"][0]["SelfId"]]
     
     def getTotalPrice(self):
         return sum([x.price for x in self.FoodMenu])
@@ -99,7 +119,7 @@ class Meal(object):
             return price
 
     def __str__(self):
-        return f"{self.date} - {self.meal_id_day} - {self.is_reserved}"
+        return f"⏰ {self.meal_name}\n{"\n".join(map(str, self.FoodMenu.values()))}"            
     
     def is_reserved(self):
         return self.is_reserved
@@ -121,6 +141,9 @@ class Day(object):
     
     def getRemainingPrice(self):
         return sum([x.getRemainingPrice() for x in self.Meals])
+    
+    def __str__(self):
+        return f"🗓 {self.DayTitle}، {self.DayDate}\n{"\n".join(map(str, self.Meals))}"
 
 class Menu(object):
     def __init__(self, http_client, date=""):
@@ -146,15 +169,4 @@ class Menu(object):
         return sum([x.getRemainingPrice() for x in self.Days])
     
     def __str__(self):
-        res = []
-        for day in self.Days:
-            for meal in day.Meals:
-                if not meal.FoodMenu:
-                    continue
-                food_text = []
-                for food in meal.FoodMenu:
-                    food_text.append(str(food))
-                food_text = "/".join(food_text)
-                x = f"{meal}: {food_text}"
-                res.append(x)
-        return "\n".join(res)
+        return "\n====================\n".join(map(str, self.Days))
