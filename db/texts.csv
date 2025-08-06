@@ -1,16 +1,22 @@
-SIGNIN_SUCCESS,"sign in success! Please use the commands below:
+START_NO_AUTH,"Hello and welcome! This is a bot for auto reservation of self-services provided by jahangostar. To start, please sign in using /signin"
+START_AUTH,"Please use the commands below:
 /menu: show the current menu
 /nextmenu: show the next week’s menu
+/reserveall: reserve next week’s menu completely
+/unreserveall: unreserve next week’s menu completely
+/credit: show current account balance
 
 /signout: quit"
-SIGNOUT_SUCCESS,"Signed out successfully! To sign in again, use /start"
-SIGNIN_FAILED,failed to sign in! Please try again with /start
-SEND_USERNAME,"Hello and welcome! To signin, please send your username"
+SIGNIN_SUCCESS,Sign in success!
+SIGNOUT_SUCCESS,"Signed out successfully! To sign in again, use /signin"
+SIGNIN_FAILED,Failed to sign in! Please try again with /signin
+SEND_USERNAME,"To signin, please send your username"
 SEND_PASSWORD,Great! Now please send your password
-NOT_SIGNED_IN,You are not signed in! Please use /start to sign in
+NOT_SIGNED_IN,You are not signed in! Please use /signin to sign in
 CURRENT_MENU,"Here’s the current week’s menu
 "
 NEXT_MENU,"Here’s next week’s menu
 "
 NEXT_MENU_NOT_AVAILABLE,"Next week’s menu not available!
 "
+SHOW_CREDIT,Your current balance is: 

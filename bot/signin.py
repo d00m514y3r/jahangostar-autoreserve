@@ -10,24 +10,25 @@ class signinHandler(object):
     class state:
         USERNAME = 0
         PASSWORD = 1        
-    def __init__(self, database, interface):
+    def __init__(self, database, interface, start_command):
         self.database = database
         self.interfaceGenerator = interface
+        self.start_command = start_command.start
         self.handler = ConversationHandler(        
         entry_points=[
-            CommandHandler("start", self.start)
+            CommandHandler("signin", self.signin)
         ],
         states = {
             self.state.USERNAME: [MessageHandler(filters.TEXT, self.username)],
             self.state.PASSWORD: [MessageHandler(filters.TEXT, self.password)]
         },
-        fallbacks=[CommandHandler("start", self.start)]
+        fallbacks=[CommandHandler("start", self.start_command)]
     )
 
     def getHandler(self):
         return self.handler
 
-    async def start(self, update, context):
+    async def signin(self, update, context):
         if "user_id" in context.user_data:
             await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
             return ConversationHandler.END
@@ -52,6 +53,7 @@ class signinHandler(object):
             context.user_data["interface"] = interface
             context.user_data["is_authorized"] = True
             await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
+            await update.message.reply_text(self.database.texts.START_AUTH)
             return ConversationHandler.END
         
         else:
@@ -61,7 +63,7 @@ class signinHandler(object):
     async def username(self, update, context):
         if "/start" in update.message.text:
             context.user_data.clear()
-            return await self.start(update, context)
+            return 2
         context.user_data["self_username"] = update.message.text
         await update.message.reply_text(self.database.texts.SEND_PASSWORD)
         return self.state.PASSWORD
@@ -69,7 +71,7 @@ class signinHandler(object):
     async def password(self, update, context):
         if "/start" in update.message.text:
             context.user_data.clear()
-            return await self.start(update, context)
+            return 2
         context.user_data["self_password"] = update.message.text
         try:
             interface = self.interfaceGenerator(
@@ -91,5 +93,6 @@ class signinHandler(object):
             )
             context.user_data["is_authorized"] = True
             await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
+            await update.message.reply_text(self.database.texts.START_AUTH)
 
         return ConversationHandler.END

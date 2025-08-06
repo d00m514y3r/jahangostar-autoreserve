@@ -5,17 +5,22 @@ from .commands import (
     signoutCommandHandler,
     nextmenuCommandHandler,
     reserveallCommandHandler,
-    unreserveallCommandHandler
+    unreserveallCommandHandler,
+    startCommandHandler,
+    creditCommandHandler
 )
 
 def get_bot_application(token, proxy, db, api):
     
-    signin_handler = signinHandler(db, api).getHandler()
+    start_command = startCommandHandler(db)
+    start_handler = start_command.getHandler()
+    signin_handler = signinHandler(db, api, start_command).getHandler()
     menu_handler = menuCommandHandler(db).getHandler()
     nextmenu_handler = nextmenuCommandHandler(db).getHandler()
     signout_handler = signoutCommandHandler(db).getHandler()
     reserveall_handler = reserveallCommandHandler(db).getHandler()
     unreserveall_handler = unreserveallCommandHandler(db).getHandler()
+    credit_handler = creditCommandHandler(db).getHandler()
 
     application = ApplicationBuilder().token(token)
     if proxy:
@@ -23,8 +28,11 @@ def get_bot_application(token, proxy, db, api):
     
     application = application.build()
 
+    application.add_handler(start_handler)
     application.add_handler(signin_handler)
     application.add_handler(signout_handler)
+    
+    application.add_handler(credit_handler)
     application.add_handler(menu_handler)
     application.add_handler(nextmenu_handler)
     application.add_handler(reserveall_handler)

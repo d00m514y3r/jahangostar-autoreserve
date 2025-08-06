@@ -3,10 +3,13 @@ from telegram.ext import (
 )
 
 class generalCommandHandlerClass(object):
-    def __init__(self, database, command):
+    def __init__(self, database, command, check_auth=True):
         self.database = database
         self.command = command
-        self.handler = CommandHandler(command, self.check_auth)
+        if check_auth:
+            self.handler = CommandHandler(command, self.check_auth)
+        else:
+            self.handler = CommandHandler(command, getattr(self, self.command))
     
     async def check_auth(self, update, context):
         if "is_authorized" not in context.user_data \
@@ -18,6 +21,17 @@ class generalCommandHandlerClass(object):
     
     def getHandler(self):
         return self.handler
+
+class startCommandHandler(generalCommandHandlerClass):
+    def __init__(self, database):
+        super().__init__(database, "start", check_auth=False)
+
+    async def start(self, update, context):
+        if "is_authorized" in context.user_data and \
+            context.user_data["is_authorized"]:
+            await update.message.reply_text(f"{self.database.texts.START_AUTH}")
+        else:
+            await update.message.reply_text(f"{self.database.texts.START_NO_AUTH}")
 
 class menuCommandHandler(generalCommandHandlerClass):   
     def __init__(self, database):
@@ -105,3 +119,11 @@ class unreserveallCommandHandler(generalCommandHandlerClass):
                     raise
 
         await update.message.reply_text(f"reservation result:\n{'\n'.join(res)}")
+
+class creditCommandHandler(generalCommandHandlerClass):   
+    def __init__(self, database):
+        super().__init__(database, "credit")
+
+    async def credit(self, update, context, interface):
+        balance = interface.methods.getCredit()
+        await update.message.reply_text(f"{self.database.texts.SHOW_CREDIT}{balance}")
