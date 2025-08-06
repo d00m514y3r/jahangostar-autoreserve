@@ -29,7 +29,7 @@ class signinHandler(object):
 
     async def start(self, update, context):
         if "user_id" in context.user_data:
-            await update.message.reply_text(f"sign in success! please use the commands:\n/menu")
+            await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
             return ConversationHandler.END
         
         context.user_data["user_id"] = update.message.chat.id
@@ -51,11 +51,11 @@ class signinHandler(object):
     
             context.user_data["interface"] = interface
             context.user_data["is_authorized"] = True
-            await update.message.reply_text(f"sign in success! please use the commands:\n/menu")
+            await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
             return ConversationHandler.END
         
         else:
-            await update.message.reply_text("please send your username")
+            await update.message.reply_text(self.database.texts.SEND_USERNAME)
             return self.state.USERNAME
 
     async def username(self, update, context):
@@ -63,7 +63,7 @@ class signinHandler(object):
             context.user_data.clear()
             return await self.start(update, context)
         context.user_data["self_username"] = update.message.text
-        await update.message.reply_text("please send your password")
+        await update.message.reply_text(self.database.texts.SEND_PASSWORD)
         return self.state.PASSWORD
 
     async def password(self, update, context):
@@ -78,7 +78,7 @@ class signinHandler(object):
             )
             context.user_data["interface"] = interface
         except Exception as e:
-            await update.message.reply_text(f"sign in failed! please try again with /start")
+            await update.message.reply_text(self.database.texts.SIGNIN_FAILED)
             context.user_data.clear()
         else:
             self.database.create_user(
@@ -90,6 +90,6 @@ class signinHandler(object):
                 cookie=json.dumps(interface.http_client.getHttpClient().cookies.get_dict())
             )
             context.user_data["is_authorized"] = True
-            await update.message.reply_text(f"sign in success! please use the commands:\n/menu")
+            await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
 
         return ConversationHandler.END

@@ -1,0 +1,16 @@
+SIGNIN_SUCCESS,"sign in success! Please use the commands below:
+/menu: show the current menu
+/nextmenu: show the next week’s menu
+
+/signout: quit"
+SIGNOUT_SUCCESS,"Signed out successfully! To sign in again, use /start"
+SIGNIN_FAILED,failed to sign in! Please try again with /start
+SEND_USERNAME,"Hello and welcome! To signin, please send your username"
+SEND_PASSWORD,Great! Now please send your password
+NOT_SIGNED_IN,You are not signed in! Please use /start to sign in
+CURRENT_MENU,"Here’s the current week’s menu
+"
+NEXT_MENU,"Here’s next week’s menu
+"
+NEXT_MENU_NOT_AVAILABLE,"Next week’s menu not available!
+"

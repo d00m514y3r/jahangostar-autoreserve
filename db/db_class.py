@@ -1,11 +1,16 @@
 # def check_table_exists(cursor, table):
 #     cursor.excecute(f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'f{table}'")
 import sqlite3
+import csv
+from box import Box
 
 class dbClass(object):
     def __init__(self, filename):
         self.connection = sqlite3.connect(filename)
         self.cursor = self.connection.cursor()
+        with open("db/texts.csv", encoding="utf-8") as csvfile:
+            reader = csv.reader(csvfile)
+            self.texts = Box({row[0]:row[1] for row in reader})
     
     def create_user(self, user_id, name, self_username, self_password, is_verified, cookie):
         #(user_id, name, self_username, self_password, is_verified)
