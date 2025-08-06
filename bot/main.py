@@ -3,7 +3,9 @@ from .signin import signinHandler
 from .commands import (
     menuCommandHandler,
     signoutCommandHandler,
-    nextmenuCommandHandler
+    nextmenuCommandHandler,
+    reserveallCommandHandler,
+    unreserveallCommandHandler
 )
 
 def get_bot_application(token, proxy, db, api):
@@ -12,6 +14,8 @@ def get_bot_application(token, proxy, db, api):
     menu_handler = menuCommandHandler(db).getHandler()
     nextmenu_handler = nextmenuCommandHandler(db).getHandler()
     signout_handler = signoutCommandHandler(db).getHandler()
+    reserveall_handler = reserveallCommandHandler(db).getHandler()
+    unreserveall_handler = unreserveallCommandHandler(db).getHandler()
 
     application = ApplicationBuilder().token(token)
     if proxy:
@@ -23,5 +27,7 @@ def get_bot_application(token, proxy, db, api):
     application.add_handler(signout_handler)
     application.add_handler(menu_handler)
     application.add_handler(nextmenu_handler)
+    application.add_handler(reserveall_handler)
+    application.add_handler(unreserveall_handler)
 
     return application

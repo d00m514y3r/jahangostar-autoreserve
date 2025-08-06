@@ -53,3 +53,54 @@ class signoutCommandHandler(generalCommandHandlerClass):
         context.user_data.clear()
 
         await update.message.reply_text(f"signout success! to sign in again use /start")    
+class reserveallCommandHandler(generalCommandHandlerClass):
+    def __init__(self, database):
+        super().__init__(database, "reserveall")
+
+    async def reserveall(self, update, context, interface):
+        interface.generateMenu()
+        interface.menu.refresh_menu(date=interface.menu.current_date, navigation=7)
+
+        res = []
+        for day in interface.menu:
+            for meal in day:
+                if meal.reservation:
+                    print(f"{meal.meal_id_week} was ignored because it was reserved")
+                    continue
+                if meal.food_count != 1:
+                    print(f"{meal.meal_id_week} was ignored because it had {meal.food_count} many food choices")
+                    continue
+                
+                food = [x for x in meal.children.values()][0]
+                if food.self_count != 1:
+                    print(f"{meal.meal_id_week} was ignored because it didn't have a self-service choice")
+                    continue
+                result = food.reserve([x for x in food.children.values()][0].id)
+                res.append(f"{result['ok']}: {food.parent}")
+
+        await update.message.reply_text(f"reservation result:\n{'\n'.join(res)}")
+
+class unreserveallCommandHandler(generalCommandHandlerClass):
+    def __init__(self, database):
+        super().__init__(database, "unreserveall")
+
+    async def unreserveall(self, update, context, interface):
+        interface.generateMenu()
+        interface.menu.refresh_menu(date=interface.menu.current_date, navigation=7)
+
+        res = []
+        for day in interface.menu:
+            for meal in day:
+                if not meal.reservation:
+                    print(f"{meal.meal_id_week} was ignored because it was not reserved")
+                    continue
+                food = meal.children[meal.reservation.food_id]
+                for service in food:
+                    if service.id == meal.reservation.self_id:
+                        result = food.unreserve(service.id)
+                        res.append(f"{result['ok']}: {meal}")
+                        break
+                else:
+                    raise
+
+        await update.message.reply_text(f"reservation result:\n{'\n'.join(res)}")
