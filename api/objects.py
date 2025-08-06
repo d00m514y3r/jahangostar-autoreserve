@@ -97,6 +97,7 @@ class Food(generalMenuObject):
         if result["ok"]:
             self.parent.reservation = Reservation(self, {"FoodId": self.id, "SelfId": self_id})
             self.reservation = True
+            self.children[self_id].reservation = True
         return result
     
     def unreserve(self, self_id):
@@ -107,6 +108,7 @@ class Food(generalMenuObject):
         if result["ok"]:
             self.parent.reservation = None
             self.reservation = False
+            self.children[self_id].reservation = False
         return result
 
 class Meal(generalMenuObject):
