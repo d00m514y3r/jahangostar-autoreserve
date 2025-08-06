@@ -2,55 +2,76 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class SelfService(object):
-    def __init__(self, parentFood, obj):
-        self.raw = obj
+class generalMenuObject(object):
+    def __init__(self, parent, raw, http_client=None):
+        self.parent = parent
+        self.raw = raw
+        if http_client:
+            self.http_client = http_client
+        
+        self.children = []
+        
+    def __iter__(self):
+        if type(self.children) is dict:
+            return iter(self.children.values())
+        else:
+            return iter(self.children)
+
+class Reservation(generalMenuObject):
+    def __init__(self, parent_meal, obj):
+        super().__init__(parent_meal, obj)
+        self.food_id = obj["FoodId"]
+        self.self_id = obj["SelfId"]
+
+class SelfService(generalMenuObject):
+    def __init__(self, parent_food, obj):
+        super().__init__(parent_food, obj)
+        
         self.id = obj["SelfId"]
         self.name = obj["SelfName"]
         self.price = obj["Price"]
+        self.reservation = False
+
+        if self.parent.reservation:
+            self.reservation = self.parent.parent.reservation.self_id == self.id
     
     def __str__(self):
-        return f"    🔺 {self.name} : {self.price}"
+        emoji = {True: "🟢", False: "🔵"}
+        return f"    {emoji[self.reservation]} {self.name} : {self.price}"
 
-class Food(object):
-    def __init__(self, parentMeal, http_client, obj):
-        self.http_client = http_client
-        self.parent_meal = parentMeal
-        self.raw = obj
+class Food(generalMenuObject):
+    def __init__(self, parent_meal, obj, http_client):
+        super().__init__(parent_meal, obj, http_client)
+        
         self.id = obj["FoodId"]
         self.name = obj["FoodName"]
-        self.self_menu = {x["SelfId"]: SelfService(self, x) for x in obj["SelfMenu"]}
-        self.self_count = len(self.self_menu)
         self.food_state = obj["FoodState"]
-        self.is_reserved = False
-        if self.parent_meal.is_reserved:
-            if self.id == self.parent_meal.raw["LastReserved"][0]["FoodId"]:
-                self.is_reserved = True
+        self.reservation = False
+        if self.parent.reservation:
+            self.reservation = self.id == self.parent.reservation.food_id
+        
+        self.children = {x["SelfId"]: SelfService(self, x) for x in obj["SelfMenu"]}
+        self.self_count = len(self.children)
         
     def __str__(self):
-        if self.is_reserved:
-            return f"  ✅ {self.name}\n{"\n".join(map(str, self.self_menu.values()))}"
-        else:
-            return f"  ❌ {self.name}\n{"\n".join(map(str, self.self_menu.values()))}"
+        emoji = {True: "✅", False: "❌"}
+        
+        return f"  {emoji[self.reservation]} {self.name}\n{"\n".join(map(str, self))}"
 
     def getPrice(self):
-        return max(x.price for x in self.self_menu.values())
+        return max(x.price for x in self)
 
     # TODO: delete function or move to Meal
-    def is_reserved(self):
-        return self.parent_meal.is_reserved
-    
-    # TODO: delete function or move to Meal
-    def change_reservation(self, count):
-        if self.parent_meal.meal_state != 0 or self.food_state != 2:
+    def change_reservation(self, count, self_id):
+        if self.parent.meal_state != 0:
             logger.error(f"failed to change reservation status of {self} due to inactive meal" )
             return {"ok": False, "result": "meal not active"}
         
         payload = {
-            "Date":self.parent_meal.date,
-            "MealId":self.parent_meal.meal_id_day,
+            "Date":self.parent.date,
+            "MealId":self.parent.meal_id_day,
             "FoodId":self.id,
-            "SelfId":self.self_id,
+            "SelfId":self_id,
             "PriceType":1,
             "Provider":1,
             "OP":1,
@@ -68,29 +89,30 @@ class Food(object):
             logger.error(f"failed to change reservation for {self} / {msg}")
         return {"ok": False, "result": res}
 
-    def reserve(self):
-        if self.is_reserved:
+    def reserve(self, self_id):
+        if self.reservation:
             logger.error(f"attempted to reserve {self} which is already reserved")
-            return None
-        result = self.change_reservation(1)
+            return {"ok": False, "result": f"attempted to reserve {self} which is already reserved"}
+        result = self.change_reservation(1, self_id)
         if result["ok"]:
-            self.parent_meal.is_reserved = True
-        return result["result"]
+            self.parent.reservation = Reservation(self, {"FoodId": self.id, "SelfId": self_id})
+            self.reservation = True
+        return result
     
-    def unreserve(self):
-        if not self.is_reserved:
+    def unreserve(self, self_id):
+        if not self.reservation:
             logger.error(f"attempted to unreserve {self.id} which is not reserved")
-            return None
-        result = self.change_reservation(0)
+            return {"ok": False, "result": f"attempted to unreserve {self} which is not reserved"}
+        result = self.change_reservation(0, self_id)
         if result["ok"]:
-            self.parent_meal.is_reserved = False
-        return result["result"]
+            self.parent.reservation = None
+            self.reservation = False
+        return result
 
-class Meal(object):
-    def __init__(self, parentDay, http_client, obj):
-        self.parentDay = parentDay
-        self.http_client = http_client
-        self.raw = obj
+class Meal(generalMenuObject):
+    def __init__(self, parent_day, obj, http_client):
+        super().__init__(parent_day, obj, http_client)
+
         self.meal_id_week = obj["Id"]
         self.meal_id_day = obj["MealId"]
         self.day_name = obj["DayName"]
@@ -98,53 +120,45 @@ class Meal(object):
         self.meal_state_title = obj["MealStateTitle"]
         self.meal_name = obj["MealName"]
         self.date = obj["Date"]
-        self.is_reserved = bool(obj["LastReserved"])
+        self.reservation = None
+        if obj["LastReserved"]:
+            self.reservation = Reservation(self, obj["LastReserved"][0])
 
-        self.food_menu = {x["FoodId"]:Food(self, http_client, x) for x in obj["FoodMenu"]}
-        self.food_count = len(self.food_menu)
+        self.children = {x["FoodId"]:Food(self, x, http_client) for x in obj["FoodMenu"]}
+        self.food_count = len(self.children)
         
-        self.service_selected = None
-        self.food_selected = None
-
-        if self.is_reserved:
-            self.food_selected = self.food_menu[obj["LastReserved"][0]["FoodId"]]
-            self.service_selected = self.food_selected.self_menu[obj["LastReserved"][0]["SelfId"]]
-
-    def getPrice(self, check_reservation):
+    def getPrice(self, skip_reserved):
         if self.food_count:
-            if check_reservation:
-                if self.is_reserved:
-                    return 0
-                return max(x.getPrice() for x in self.food_menu.values())
-            return max(x.getPrice() for x in self.food_menu.values())
+            if skip_reserved and self.reservation:
+                return 0
+            return max(food.getPrice() for food in self)
         return 0        
     def __str__(self):
-        return f"⏰ {self.meal_name}\n{"\n".join(map(str, self.food_menu.values()))}"            
+        return f"⏰ {self.meal_name}\n{"\n".join(map(str, self))}"
     
-class Day(object):
-    def __init__(self, parentMenu, http_client, obj):
-        self.parentMenu = parentMenu
-        self.http_client = http_client
-        self.raw = obj
+class Day(generalMenuObject):
+    def __init__(self, parent_menu, obj, http_client):
+        super().__init__(parent_menu, obj, http_client)
+        
         self.day_id = obj["DayId"]
         self.day_date = obj["DayDate"]
         self.day_title = obj["DayTitle"]
         self.day_state = obj["DayState"]
         self.day_state_title = obj["DayStateTitle"]
-        self.meals = [Meal(self, http_client, meal) for meal in obj["Meals"]]
+        self.children = [Meal(self, meal, http_client) for meal in obj["Meals"]]
     
-    def getPrice(self, check_reservation):
-        return sum(x.getPrice(check_reservation) for x in self.meals)
+    def getPrice(self, skip_reserved):
+        return sum(x.getPrice(skip_reserved) for x in self)
     
     def __str__(self):
-        return f"🗓 {self.day_title}، {self.day_date}\n{"\n".join(map(str, self.meals))}"
+        return f"🗓 {self.day_title}، {self.day_date}\n{"\n".join(map(str, self))}"
 
 class Menu(object):
     def __init__(self, http_client, date=""):
         self.date = date
         self.http_client = http_client
         self.raw = self.get_menu(date=date)
-        self.days = [Day(self, http_client, day) for day in self.raw]
+        self.days = [Day(self, day, http_client) for day in self.raw]
         self.current_date = date if date else self.days[0].day_date
     
     def get_menu(self, date="", navigation=0):
@@ -154,12 +168,15 @@ class Menu(object):
     def refresh_menu(self, date="", navigation=0):
         obj = self.get_menu(date=date, navigation=navigation)
         self.raw = obj
-        self.days = [Day(self, self.http_client, day) for day in self.raw]
+        self.days = [Day(self, day, self.http_client) for day in self.raw]
     
-    def getPrice(self, check_reservation=False):
-        return sum(x.getPrice(check_reservation=check_reservation) for x in self.days)
+    def getPrice(self, skip_reserved=False):
+        return sum(x.getPrice(skip_reserved=skip_reserved) for x in self.days)
     
     def __str__(self):
         return f'{"\n====================\n".join(map(str, self.days))}\n\
         total price: {self.getPrice()}\n\
-        remaining price: {self.getPrice(check_reservation=True)}'
+        remaining price: {self.getPrice(skip_reserved=True)}'
+    
+    def __iter__(self):
+        return iter(self.days)
