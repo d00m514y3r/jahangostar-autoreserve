@@ -1,6 +1,5 @@
-from .methods import Methods
 from .auth import authenticatedClientGenerator
-from .objects import Menu
+from .menu import Menu
 from .methods import Methods
 
 
