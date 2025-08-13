@@ -52,6 +52,7 @@ class signinHandler(object):
     
             context.user_data["interface"] = interface
             context.user_data["is_authorized"] = True
+            context.user_data["filters"] = json.loads(user["filters"])
             await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
             await update.message.reply_text(self.database.texts.START_AUTH)
             return ConversationHandler.END
@@ -92,6 +93,7 @@ class signinHandler(object):
                 cookie=json.dumps(interface.http_client.getHttpClient().cookies.get_dict())
             )
             context.user_data["is_authorized"] = True
+            context.user_data["filters"] = []
             await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
             await update.message.reply_text(self.database.texts.START_AUTH)
 

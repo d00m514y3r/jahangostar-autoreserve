@@ -14,8 +14,9 @@ class dbClass(object):
     
     def create_user(self, user_id, name, self_username, self_password, is_verified, cookie):
         #(user_id, name, self_username, self_password, is_verified)
-        x = f"INSERT INTO users (user_id, name, self_username, self_password, is_verified, login_cookie) VALUES \
-        ({user_id}, '{name}', '{self_username}', '{self_password}', '{'TRUE' if is_verified else 'FALSE'}', '{cookie}')"
+        x = f"INSERT INTO users VALUES \
+        ({user_id}, '{name}', '{self_username}', '{self_password}',\
+             '{'TRUE' if is_verified else 'FALSE'}', '{cookie}', '[]')"
         self.cursor.execute(x)
         self.connection.commit()
     
@@ -28,7 +29,8 @@ class dbClass(object):
                 "self_username": x[2],
                 "self_password": x[3],
                 "is_verified": x[4],
-                "cookie": x[5]
+                "cookie": x[5],
+                "filters": x[6]
             }
         return None
     
@@ -38,6 +40,10 @@ class dbClass(object):
     
     def update_cookie(self, user_id, cookie):
         self.cursor.execute(f"UPDATE users SET login_cookie='{cookie}' WHERE user_id={user_id}")
+        self.connection.commit()
+    
+    def update_filters(self, user_id, filters):
+        self.cursor.execute(f"UPDATE users SET filters='{filters}' WHERE user_id={user_id}")
         self.connection.commit()
 
     def reset_db(self):
@@ -65,11 +71,12 @@ class dbClass(object):
         self.cursor.execute(
             """CREATE TABLE users(
                 
-                user_id INTEGER NOT NULL UNIQUE,
+                user_id INTEGER NOT NULL UNIQUE PRIMARY KEY,
                 name TEXT NOT NULL,
                 self_username TEXT,
                 self_password TEXT,
                 is_verified bool,
                 login_cookie TEXT
+                filters TEXT NOT NULL
                 )"""
     )
