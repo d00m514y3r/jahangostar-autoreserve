@@ -12,10 +12,9 @@ class Menu(object):
         self.days = []
 
         self.filters = []
-        self.enable_filters = False
     
-    def __str__(self):
-        return f'{"\n====================\n".join(map(str, self.days))}\n\
+    def __str__(self, filters=[]):
+        return f'{"\n====================\n".join(x.__str__(filters=filters) for x in self)}\n\
         total price: {self.getPrice()}\n\
         remaining price: {self.getPrice(skip_reserved=True)}'
     

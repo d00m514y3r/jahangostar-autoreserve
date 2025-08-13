@@ -5,15 +5,18 @@ from .general import generalInlineHandlerClass
 
 class menucommandFilterToggleHandler(generalInlineHandlerClass):
     button_text = {True: "مشاهده منو با فیلترها", False: "مشاهده منو بدون فیلترها"}
+    callbacks = {True: "menucommand_disablefilter", False: "menucommand_enablefilter"}
     def __init__(self, database):
-        super().__init__(database, pattern="menucommand_togglefilter")
+        super().__init__(database, pattern="menucommand_.")
     
     async def callback(self, update, context, interface):
+        use_filters = (update.callback_query.data == "menucommand_enablefilter")
+        m = interface.menu.__str__(filters=context.user_data["filters"] if use_filters else None)
+        
         keyboard = InlineKeyboardMarkup([[
             InlineKeyboardButton(
-                self.button_text[interface.menu.enable_filters],
-                callback_data="menucommand_togglefilter")
+                self.button_text[use_filters],
+                callback_data=self.callbacks[use_filters])
         ]])
         
-        interface.menu.enable_filters = not interface.menu.enable_filters
-        await update.callback_query.message.edit_text(f"{interface.menu}",reply_markup=keyboard)
+        await update.callback_query.message.edit_text(m,reply_markup=keyboard)

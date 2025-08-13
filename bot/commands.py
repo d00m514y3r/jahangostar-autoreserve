@@ -23,10 +23,9 @@ class menuCommandHandler(generalCommandHandlerClass):
             if interface.menu == None:
                 interface.generateMenu()
             interface.menu.get_current_menu()
-        
-        interface.menu.enable_filters = False
+
         keyboard = InlineKeyboardMarkup([[
-            InlineKeyboardButton("مشاهده منو با فیلترها", callback_data="menucommand_togglefilter")
+            InlineKeyboardButton("مشاهده منو با فیلترها", callback_data="menucommand_enablefilter")
         ]])
 
         await update.message.reply_text(f"{self.database.texts.CURRENT_MENU}{interface.menu}",

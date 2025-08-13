@@ -15,8 +15,9 @@ class Day(generalMenuObject):
     def getPrice(self, skip_reserved):
         return sum(x.getPrice(skip_reserved) for x in self)
     
-    def __str__(self):
-        return f"🗓 {self.day_title}، {self.day_date}\n{"\n".join(map(str, self))}"
+    def __str__(self, filters):
+        return f"🗓 {self.day_title}، {self.day_date}\n{'\n'.join(x.__str__(filters=filters) for x in self)}"
+
 
     def apply_filter(self, filters):
         new_meal_list = []

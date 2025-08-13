@@ -21,9 +21,9 @@ class Food(generalMenuObject):
         self.children = {x["SelfId"]: SelfService(self, x) for x in obj["SelfMenu"]}
         self.self_count = len(self.children)
         
-    def __str__(self):
-        if self.parent_menu.enable_filters:
-            for f in self.parent_menu.filters:
+    def __str__(self, filters):
+        if filters:
+            for f in filters:
                 if not f.check(self):
                     return "filtered"
 
