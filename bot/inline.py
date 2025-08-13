@@ -4,7 +4,7 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from .general import generalInlineHandlerClass
 
 class menucommandFilterToggleHandler(generalInlineHandlerClass):
-    button_text = {True: "مشاهده منو با فیلترها", False: "مشاهده منو بدون فیلترها"}
+    button_text = {False: "مشاهده منو با فیلترها", True: "مشاهده منو بدون فیلترها"}
     callbacks = {True: "menucommand_disablefilter", False: "menucommand_enablefilter"}
     def __init__(self, database):
         super().__init__(database, pattern="menucommand_.")

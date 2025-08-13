@@ -6,4 +6,6 @@ def load_from_database(obj):
         match x["type"]:
             case "meal":
                 l.append(mealFilter(x["meal"], invert=x["invert"]))
+            case "day":
+                l.append(dayFilter(x["day"], invert=x["invert"]))
     return l

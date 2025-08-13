@@ -25,8 +25,9 @@ NEXT_MENU_NOT_AVAILABLE,"Next week’s menu not available!
 SHOW_CREDIT,Your current balance is: 
 FILTERADD_SELECT_FILTER,please select a filter type: 
 FILTERADD_SELECT_MEAL,please select a meal type: 
-FILTERADD_CANCEL,adding filter canceled!
-FILTERADD_INVALID_INPUT,invalid input. Please try again
+FILTERADD_SELECT_DAY,please select a day of the week:
+CANCEL,adding filter canceled!
+INVALID_INPUT,invalid input. Please try again
 FILTERADD_SUCCESS,"filter created successfully: here’s your filter:
 "
 DELETEFILTER_SUCCESS,filter removed successfully!

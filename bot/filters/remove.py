@@ -9,7 +9,7 @@ class removeFilterHandler(generalMessageHandlerClass):
         self.state_dict = {
             self.state.CHOOSE_FILTER: [MessageHandler(filters.TEXT, self.choose_type)],
         }        
-        super().__init__(database, fallback, "deletefilter")
+        super().__init__(database, "deletefilter")
 
     async def deletefilter(self, update, context):
         f_list = [f"{i+1} ➡️ {x}" for i, x in enumerate(context.user_data["filters"])]

@@ -2,7 +2,8 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
     MessageHandler,
-    ConversationHandler
+    ConversationHandler,
+    filters
 )
 
 class generalInlineHandlerClass(object):
@@ -45,10 +46,15 @@ class generalCommandHandlerClass(object):
     def getHandler(self):
         return self.handler
 
+class cancelFilter(filters.MessageFilter):
+    def filter(self, message):
+        return message.text == "لفو"
+
+cancel_f = cancelFilter()
+
 class generalMessageHandlerClass(object):
-    def __init__(self, database, fallback, command):
+    def __init__(self, database, command):
         self.database = database
-        self.fallback = fallback
         self.command = command
         self.entry_point = CommandHandler(command, self.check_auth)
         assert hasattr(self, "state_dict")
@@ -56,8 +62,18 @@ class generalMessageHandlerClass(object):
         self.handler = ConversationHandler(
             entry_points=[self.entry_point],
             states=self.state_dict,
-            fallbacks=[fallback]
+            fallbacks=[
+                MessageHandler(cancel_f, self.cancel),
+                MessageHandler(filters.ALL, self.invalid_input)
+                ]
         )
+    async def invalid_input(self, update, context):
+        await update.message.reply_text(self.database.texts.INVALID_INPUT)
+    
+    async def cancel(self, update, context):
+        await update.message.reply_text(self.database.texts.CANCEL)
+        return ConversationHandler.END
+
 
     async def check_auth(self, update, context):
         if "is_authorized" not in context.user_data \
