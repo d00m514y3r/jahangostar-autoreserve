@@ -7,8 +7,13 @@ from .commands import (
     reserveallCommandHandler,
     unreserveallCommandHandler,
     startCommandHandler,
-    creditCommandHandler
+    creditCommandHandler,
+    showfiltersCommandHandler,
 )
+
+from .inline import menucommandFilterToggleHandler
+
+from .filters import filterAddHandler, removeFilterHandler
 
 def get_bot_application(token, proxy, db, api):
     
@@ -21,6 +26,11 @@ def get_bot_application(token, proxy, db, api):
     reserveall_handler = reserveallCommandHandler(db).getHandler()
     unreserveall_handler = unreserveallCommandHandler(db).getHandler()
     credit_handler = creditCommandHandler(db).getHandler()
+    showfilters_handler = showfiltersCommandHandler(db).getHandler()
+
+    filter_add_handler = filterAddHandler(db, start_handler).getHandler()
+    menucommand_callback_handler = menucommandFilterToggleHandler(db).getHandler()
+    remove_filter_handler = removeFilterHandler(db, start_handler).getHandler()
 
     application = ApplicationBuilder().token(token)
     if proxy:
@@ -37,5 +47,11 @@ def get_bot_application(token, proxy, db, api):
     application.add_handler(nextmenu_handler)
     application.add_handler(reserveall_handler)
     application.add_handler(unreserveall_handler)
+
+    application.add_handler(filter_add_handler)
+    application.add_handler(showfilters_handler)
+    
+    application.add_handler(menucommand_callback_handler)
+    application.add_handler(remove_filter_handler)
 
     return application

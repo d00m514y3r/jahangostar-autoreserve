@@ -1,6 +1,5 @@
 import logging
 from .day import Day
-from .menu_filters import mealFilter
 
 logger = logging.getLogger(__name__)
     
@@ -42,10 +41,3 @@ class Menu(object):
     
     def getPrice(self, skip_reserved=False):
         return sum(x.getPrice(skip_reserved=skip_reserved) for x in self.days)
-    
-    def add_filter(self, filter_type, **kwargs):
-        if filter_type == "meal":
-            f = mealFilter(**kwargs)
-            self.filters.append(f)
-            return f
-        return None

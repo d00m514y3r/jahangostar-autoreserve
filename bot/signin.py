@@ -5,6 +5,7 @@ from telegram.ext import (
     filters
 )
 import json
+from .filters import load_from_database
 
 class signinHandler(object):
     class state:
@@ -52,7 +53,7 @@ class signinHandler(object):
     
             context.user_data["interface"] = interface
             context.user_data["is_authorized"] = True
-            context.user_data["filters"] = json.loads(user["filters"])
+            context.user_data["filters"] = load_from_database(json.loads(user["filters"]))
             await update.message.reply_text(self.database.texts.SIGNIN_SUCCESS)
             await update.message.reply_text(self.database.texts.START_AUTH)
             return ConversationHandler.END

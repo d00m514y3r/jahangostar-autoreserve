@@ -5,6 +5,9 @@ START_AUTH,"Please use the commands below:
 /reserveall: reserve next week’s menu completely
 /unreserveall: unreserve next week’s menu completely
 /credit: show current account balance
+/addfilter: add a filter
+/showfilters: show a list of your filters
+/deletefilter: delete a filter
 
 /signout: quit"
 SIGNIN_SUCCESS,Sign in success!
@@ -20,3 +23,11 @@ NEXT_MENU,"Here’s next week’s menu
 NEXT_MENU_NOT_AVAILABLE,"Next week’s menu not available!
 "
 SHOW_CREDIT,Your current balance is: 
+FILTERADD_SELECT_FILTER,please select a filter type: 
+FILTERADD_SELECT_MEAL,please select a meal type: 
+FILTERADD_CANCEL,adding filter canceled!
+FILTERADD_INVALID_INPUT,invalid input. Please try again
+FILTERADD_SUCCESS,"filter created successfully: here’s your filter:
+"
+DELETEFILTER_SUCCESS,filter removed successfully!
+DELETEFILTER_SEND_INDEX,send the row number for the filter you want to delete (number behind arrow)

@@ -1,26 +1,6 @@
-from telegram.ext import (
-    CommandHandler,
-)
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
 
-class generalCommandHandlerClass(object):
-    def __init__(self, database, command, check_auth=True):
-        self.database = database
-        self.command = command
-        if check_auth:
-            self.handler = CommandHandler(command, self.check_auth)
-        else:
-            self.handler = CommandHandler(command, getattr(self, self.command))
-    
-    async def check_auth(self, update, context):
-        if "is_authorized" not in context.user_data \
-        or not context.user_data["is_authorized"]:
-            await update.message.reply_text(self.database.texts.NOT_SIGNED_IN)
-            return False
-        interface = context.user_data["interface"]
-        return await getattr(self, self.command)(update, context, interface)
-    
-    def getHandler(self):
-        return self.handler
+from .general import generalCommandHandlerClass
 
 class startCommandHandler(generalCommandHandlerClass):
     def __init__(self, database):
@@ -29,9 +9,10 @@ class startCommandHandler(generalCommandHandlerClass):
     async def start(self, update, context):
         if "is_authorized" in context.user_data and \
             context.user_data["is_authorized"]:
-            await update.message.reply_text(f"{self.database.texts.START_AUTH}")
+            await update.message.reply_text(self.database.texts.START_AUTH, reply_markup=ReplyKeyboardRemove())
         else:
-            await update.message.reply_text(f"{self.database.texts.START_NO_AUTH}")
+            await update.message.reply_text(self.database.texts.START_NO_AUTH, reply_markup=ReplyKeyboardRemove())
+        return -1
 
 class menuCommandHandler(generalCommandHandlerClass):   
     def __init__(self, database):
@@ -39,10 +20,18 @@ class menuCommandHandler(generalCommandHandlerClass):
 
     async def menu(self, update, context, interface):
         if not interface.menu:
-            interface.generateMenu()
-        else:
-            interface.menu.refresh_menu()
-        await update.message.reply_text(f"{self.database.texts.CURRENT_MENU}{interface.menu}")
+            if interface.menu == None:
+                interface.generateMenu()
+            interface.menu.get_current_menu()
+        
+        interface.menu.enable_filters = False
+        keyboard = InlineKeyboardMarkup([[
+            InlineKeyboardButton("مشاهده منو با فیلترها", callback_data="menucommand_togglefilter")
+        ]])
+
+        await update.message.reply_text(f"{self.database.texts.CURRENT_MENU}{interface.menu}",
+        reply_markup=keyboard
+        )
 
 class nextmenuCommandHandler(generalCommandHandlerClass):   
     def __init__(self, database):
@@ -50,9 +39,10 @@ class nextmenuCommandHandler(generalCommandHandlerClass):
 
     async def nextmenu(self, update, context, interface):
         if not interface.menu:
-            interface.generateMenu()
+            if interface.menu == None:
+                interface.generateMenu()
+            # TODO: get next week instead of current
         try:
-            interface.menu.refresh_menu(date=interface.menu.current_date, navigation=7)
             await update.message.reply_text(f"{self.database.texts.NEXT_MENU}{interface.menu}")
         except Exception as e:
             await update.message.reply_text(f"{self.database.texts.NEXT_MENU_NOT_AVAILABLE}{e}")
@@ -127,3 +117,11 @@ class creditCommandHandler(generalCommandHandlerClass):
     async def credit(self, update, context, interface):
         balance = interface.methods.getCredit()
         await update.message.reply_text(f"{self.database.texts.SHOW_CREDIT}{balance}")
+
+class showfiltersCommandHandler(generalCommandHandlerClass):   
+    def __init__(self, database):
+        super().__init__(database, "showfilters")
+
+    async def showfilters(self, update, context, interface):
+        f_list = [f"{i+1} ➡️ {x}" for i, x in enumerate(context.user_data["filters"])]
+        await update.message.reply_text(f"filters:\n{'\n'.join(f_list)}")

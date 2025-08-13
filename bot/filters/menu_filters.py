@@ -8,11 +8,11 @@ class mealFilter(object):
         self.name = self.meal_name[meal]
         self.invert = invert
 
-    def __dict__(self):
+    def as_dict(self):
         return {'type': "meal", "meal": self.meal, "invert": self.invert}
     
     def __str__(self):
-        return f"meal type: {self.name}"
+        return f"filter type: meal. meal: {self.name}, exclude: {self.invert}"
 
     def check(self, food):
         return self.invert ^ (food.parent.meal_id_day == self.meal)
