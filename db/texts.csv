@@ -26,11 +26,13 @@ SHOW_CREDIT,Your current balance is:
 FILTERADD_SELECT_FILTER,please select a filter type: 
 FILTERADD_SELECT_MEAL,please select a meal type: 
 FILTERADD_SELECT_DAY,please select a day of the week:
+FILTERADD_SELECT_INVERSION,please choose one of the options below
+FILTERADD_SEND_FOOD,please send the name of the food
 CANCEL,adding filter canceled!
 INVALID_INPUT,invalid input. Please try again
 FILTERADD_SUCCESS,"filter created successfully: here’s your filter:
 "
 DELETEFILTER_SUCCESS,filter removed successfully!
 DELETEFILTER_SEND_INDEX,send the row number for the filter you want to delete (number behind arrow)
-FILTERADD_SELECT_INVERSION,please choose one of the options below
+,
 NO_FILTER_FOUND,you currently do not have any filters

@@ -23,7 +23,7 @@ class filterAddHandler(generalMessageHandlerClass):
         meals = {"صبحانه": 1, "ناهار": 2, "شام": 3, "افطار": 4, "سحری": 5}
         days = {"شنبه":0,"یکشنبه":1,"دوشنبه":2,"سه شنبه":3,"چهارشنبه":4,"پنجشنبه":5,"جمعه":6}
         filter_type_keyboard = ReplyKeyboardMarkup(
-            keyboard=[["بر اساس روز", 'بر اساس وعده', 'براساس اسم غذا'], ['لفو']],
+            keyboard=[["بر اساس روز", 'بر اساس وعده', 'بر اساس اسم غذا'], ['لفو']],
             resize_keyboard=True)
         meal_filter_keyboard = ReplyKeyboardMarkup(
             keyboard=[["صبحانه", "ناهار", "شام", "افطار", "سحری"], ["لغو"]],
@@ -42,6 +42,7 @@ class filterAddHandler(generalMessageHandlerClass):
             self.state.CHOOSE_FILTER_TYPE: [MessageHandler(filter_f, self.choose_type)],
             self.state.APPLY_MEAL: [MessageHandler(meal_f, self.apply_meal)],
             self.state.APPLY_DAY: [MessageHandler(day_f, self.apply_day)],
+            self.state.APPLY_FOOD: [MessageHandler(filters.TEXT, self.apply_food)],
             self.state.SELECT_INVERSION: [MessageHandler(inversion_f, self.create_filter)]
         }        
         super().__init__(database, "addfilter")
@@ -62,6 +63,11 @@ class filterAddHandler(generalMessageHandlerClass):
                 await update.message.reply_text(self.database.texts.FILTERADD_SELECT_DAY,
                     reply_markup=self.presets.day_filter_keyboard)
                 return self.state.APPLY_DAY
+            case 'بر اساس اسم غذا':
+                await update.message.reply_text(self.database.texts.FILTERADD_SEND_FOOD,
+                    reply_markup=self.presets.remove_keyboard)
+                return self.state.APPLY_FOOD
+
 
     async def apply_meal(self, update, context):
         context.user_data["temporary_filter"] = \
@@ -79,6 +85,14 @@ class filterAddHandler(generalMessageHandlerClass):
         
         return self.state.SELECT_INVERSION
     
+    async def apply_food(self, update, context):
+        context.user_data["temporary_filter"] = \
+            {"type": "food", "food": update.message.text, "inversion": None}
+        await update.message.reply_text(self.database.texts.FILTERADD_SELECT_INVERSION,
+            reply_markup=self.presets.inversion_keyboard)
+        
+        return self.state.SELECT_INVERSION
+    
     async def create_filter(self, update, context):
         inversion = (update.message.text == "هر غذایی که از این فیلتر عبور کند رزرو [نمیشود]")
         
@@ -87,6 +101,8 @@ class filterAddHandler(generalMessageHandlerClass):
             f = mealFilter(f["meal"], invert=inversion)
         elif f["type"] == "day": 
             f = dayFilter(f["day"], invert=inversion)
+        elif f["type"] == "food":
+            f = foodFilter(f["food"], invert=inversion)
         else:
             raise
         

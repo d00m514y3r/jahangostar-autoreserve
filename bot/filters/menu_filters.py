@@ -33,3 +33,19 @@ class dayFilter(object):
 
     def check(self, food):
         return self.invert ^ (food.parent.parent.day_id == self.day)
+
+class foodFilter(object):
+    def __init__(self, food, invert=False):
+        if not (type(food) is str):
+            raise
+        self.food_name = food
+        self.invert = invert
+
+    def as_dict(self):
+        return {'type': "food", "food": self.food_name, "invert": self.invert}
+    
+    def __str__(self):
+        return f"filter type: food. food: {self.food_name}, exclude: {self.invert}"
+
+    def check(self, food):
+        return self.invert ^ (self.food_name in food.name)
