@@ -122,5 +122,8 @@ class showfiltersCommandHandler(generalCommandHandlerClass):
         super().__init__(database, "showfilters")
 
     async def showfilters(self, update, context, interface):
-        f_list = [f"{i+1} ➡️ {x}" for i, x in enumerate(context.user_data["filters"])]
-        await update.message.reply_text(f"filters:\n{'\n'.join(f_list)}")
+        if not context.user_data["filters"]:
+            await update.message.reply_text(self.database.texts.NO_FILTER_FOUND)
+        else:
+            f_list = [f"{i+1} ➡️ {x}" for i, x in enumerate(context.user_data["filters"])]
+            await update.message.reply_text(f"filters:\n{'\n'.join(f_list)}")

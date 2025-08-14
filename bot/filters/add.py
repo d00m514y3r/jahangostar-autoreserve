@@ -1,24 +1,24 @@
+import json
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     CommandHandler,
     ConversationHandler, 
     MessageHandler, 
     filters
 )
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from ..general import generalMessageHandlerClass
+from .message_filters import filter_f, meal_f, day_f, inversion_f
 from .menu_filters import *
-from .message_filters import filter_f, meal_f, day_f
-import json
 
 class filterAddHandler(generalMessageHandlerClass):
     class state:
         CHOOSE_FILTER_TYPE = 1
-        SEND_FILTER = 11
-        APPLY_DAY = 111
-        APPLY_MEAL = 112
-        APPLY_FOOD = 113
-        CANCEL = 0
+        APPLY_DAY = 11
+        APPLY_MEAL = 12
+        APPLY_FOOD = 13
+        SELECT_INVERSION = 4
+
     class presets:
         meals = {"صبحانه": 1, "ناهار": 2, "شام": 3, "افطار": 4, "سحری": 5}
         days = {"شنبه":0,"یکشنبه":1,"دوشنبه":2,"سه شنبه":3,"چهارشنبه":4,"پنجشنبه":5,"جمعه":6}
@@ -31,6 +31,10 @@ class filterAddHandler(generalMessageHandlerClass):
         day_filter_keyboard = ReplyKeyboardMarkup(
             keyboard=[["شنبه", "یکشنبه", "دوشنبه", "سه شنبه"],["چهارشنبه","پنجشنبه","جمعه"], ["لغو"]],
             resize_keyboard=True)
+        inversion_keyboard = ReplyKeyboardMarkup(
+            keyboard=[["هر غذایی که از این فیلتر عبور کند رزرو [میشود]"], ["هر غذایی که از این فیلتر عبور کند رزرو [نمیشود]"]],
+            resize_keyboard=True
+        )
         remove_keyboard = ReplyKeyboardRemove()
 
     def __init__(self, database, fallback):
@@ -38,10 +42,12 @@ class filterAddHandler(generalMessageHandlerClass):
             self.state.CHOOSE_FILTER_TYPE: [MessageHandler(filter_f, self.choose_type)],
             self.state.APPLY_MEAL: [MessageHandler(meal_f, self.apply_meal)],
             self.state.APPLY_DAY: [MessageHandler(day_f, self.apply_day)],
+            self.state.SELECT_INVERSION: [MessageHandler(inversion_f, self.create_filter)]
         }        
         super().__init__(database, "addfilter")
 
     async def addfilter(self, update, context):
+        context.user_data["temporary_filter"] = {}
         await update.message.reply_text(self.database.texts.FILTERADD_SELECT_FILTER,
             reply_markup=self.presets.filter_type_keyboard)
         return self.state.CHOOSE_FILTER_TYPE
@@ -58,21 +64,37 @@ class filterAddHandler(generalMessageHandlerClass):
                 return self.state.APPLY_DAY
 
     async def apply_meal(self, update, context):
-        f = mealFilter(self.presets.meals[update.message.text])
-        context.user_data["filters"].append(f)
-        self.database.update_filters(
-            context.user_data["user_id"],
-            json.dumps([x.as_dict() for x in context.user_data["filters"]]))
-        await update.message.reply_text(f"{self.database.texts.FILTERADD_SUCCESS}{f}",
-            reply_markup=self.presets.remove_keyboard)
-        return ConversationHandler.END
+        context.user_data["temporary_filter"] = \
+            {"type": "meal", "meal": self.presets.meals[update.message.text], "inversion": None}
+        await update.message.reply_text(self.database.texts.FILTERADD_SELECT_INVERSION,
+            reply_markup=self.presets.inversion_keyboard)
+        
+        return self.state.SELECT_INVERSION
     
     async def apply_day(self, update, context):
-        f = dayFilter(self.presets.days[update.message.text])
+        context.user_data["temporary_filter"] = \
+            {"type": "day", "day": self.presets.days[update.message.text], "inversion": None}
+        await update.message.reply_text(self.database.texts.FILTERADD_SELECT_INVERSION,
+            reply_markup=self.presets.inversion_keyboard)
+        
+        return self.state.SELECT_INVERSION
+    
+    async def create_filter(self, update, context):
+        inversion = (update.message.text == "هر غذایی که از این فیلتر عبور کند رزرو [نمیشود]")
+        
+        f = context.user_data["temporary_filter"]
+        if f["type"] == "meal":
+            f = mealFilter(f["meal"], invert=inversion)
+        elif f["type"] == "day": 
+            f = dayFilter(f["day"], invert=inversion)
+        else:
+            raise
+        
         context.user_data["filters"].append(f)
         self.database.update_filters(
             context.user_data["user_id"],
             json.dumps([x.as_dict() for x in context.user_data["filters"]]))
+        
         await update.message.reply_text(f"{self.database.texts.FILTERADD_SUCCESS}{f}",
             reply_markup=self.presets.remove_keyboard)
         return ConversationHandler.END

@@ -32,3 +32,5 @@ FILTERADD_SUCCESS,"filter created successfully: here’s your filter:
 "
 DELETEFILTER_SUCCESS,filter removed successfully!
 DELETEFILTER_SEND_INDEX,send the row number for the filter you want to delete (number behind arrow)
+FILTERADD_SELECT_INVERSION,please choose one of the options below
+NO_FILTER_FOUND,you currently do not have any filters
