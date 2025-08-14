@@ -28,10 +28,10 @@ class Food(generalMenuObject):
     def __str__(self, filters=[]):
         if filters:
             if not self.check_filters(filters):
-                return 'filtered'
+                return 'filtered-food'
 
         emoji = {True: "✅", False: "❌"}
-        return f"  {emoji[self.reservation]} {self.name}\n{"\n".join(map(str, self))}"
+        return f"  {emoji[self.reservation]} {self.name}\n{"\n".join(x.__str__(filters) for x in self)}"
 
     def getPrice(self, filters):
         if filters:
@@ -40,12 +40,16 @@ class Food(generalMenuObject):
         return max(x.price for x in self)
     
     def check_filters(self, filters):
+        s_list = []
         for f in filters:
-            if not f.check(self):
-                return False
-        
-        return True
-
+            if f.type != "self":
+                if not f.check(self):
+                    return False
+            else:
+                for s in self:
+                    if f.check(s):
+                        s_list.append(s)
+        return s_list
 
     # TODO: delete function or move to Meal
     def change_reservation(self, count, self_id):

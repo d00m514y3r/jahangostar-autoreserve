@@ -3,6 +3,7 @@ class mealFilter(object):
     def __init__(self, meal, invert=False):
         if not ((type(meal) is int) and (1 <= meal <= 5)):
             raise
+        self.type = "meal"
         self.meal = meal
         self.name = self.meal_name[meal]
         self.invert = invert
@@ -21,6 +22,7 @@ class dayFilter(object):
     def __init__(self, day, invert=False):
         if not ((type(day) is int) and (1 <= day <= 7)):
             raise
+        self.type = "day"
         self.day = day
         self.name = self.day_name[day]
         self.invert = invert
@@ -38,6 +40,7 @@ class foodFilter(object):
     def __init__(self, food, invert=False):
         if not (type(food) is str):
             raise
+        self.type = "food"
         self.food_name = food
         self.invert = invert
 
@@ -49,3 +52,20 @@ class foodFilter(object):
 
     def check(self, food):
         return self.invert ^ (self.food_name in food.name)
+
+class selfFilter(object):
+    def __init__(self, s, invert=False):
+        if not (type(s) is str):
+            raise
+        self.type = "self"
+        self.s_name = s
+        self.invert = invert
+
+    def as_dict(self):
+        return {'type': "self", "self": self.s_name, "invert": self.invert}
+    
+    def __str__(self):
+        return f"filter type: self. self name: {self.s_name}, exclude: {self.invert}"
+
+    def check(self, s):
+        return self.invert ^ (self.s_name in s.name)

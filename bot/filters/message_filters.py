@@ -2,7 +2,7 @@ from telegram.ext import filters
 
 class filterListFilter(filters.MessageFilter):
     def filter(self, message):
-        return message.text in ("بر اساس روز", 'بر اساس وعده', 'بر اساس اسم غذا')
+        return message.text in ("بر اساس روز", 'بر اساس وعده', 'بر اساس اسم غذا', 'بر اساس سلف سرویس')
 
 class mealListFilter(filters.MessageFilter):
     def filter(self, message):

@@ -11,7 +11,7 @@ class menucommandFilterToggleHandler(generalInlineHandlerClass):
     
     async def callback(self, update, context, interface):
         use_filters = (update.callback_query.data == "menucommand_enablefilter")
-        m = interface.menu.__str__(filters=context.user_data["filters"] if use_filters else None)
+        m = interface.menu.__str__(filters=context.user_data["filters"] if use_filters else [])
         
         keyboard = InlineKeyboardMarkup([[
             InlineKeyboardButton(

@@ -28,6 +28,7 @@ FILTERADD_SELECT_MEAL,please select a meal type:
 FILTERADD_SELECT_DAY,please select a day of the week:
 FILTERADD_SELECT_INVERSION,please choose one of the options below
 FILTERADD_SEND_FOOD,please send the name of the food
+FILTERADD_SEND_SELF,please send the name of the self-service
 CANCEL,adding filter canceled!
 INVALID_INPUT,invalid input. Please try again
 FILTERADD_SUCCESS,"filter created successfully: here’s your filter:

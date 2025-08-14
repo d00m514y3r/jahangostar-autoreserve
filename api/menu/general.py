@@ -28,6 +28,11 @@ class SelfService(generalMenuObject):
         if self.parent.reservation:
             self.reservation = self.parent.parent.reservation.self_id == self.id
     
-    def __str__(self):
+    def __str__(self, filters=[]):
+        if filters:
+            for f in filters:
+                if not f.check(self):
+                    return "filtered-self"
+
         emoji = {True: "🟢", False: "🔵"}
         return f"    {emoji[self.reservation]} {self.name} : {self.price}"

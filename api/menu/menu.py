@@ -15,6 +15,8 @@ class Menu(object):
         self.filters = []
     
     def __str__(self, filters=[]):
+        if not (type(filters) is list):
+            raise
         return f'{"\n====================\n".join(x.__str__(filters=filters) for x in self)}\n\
         total price: {self.getPrice(filters=filters)}\n\
         remaining price: {self.getPrice(filters=filters, skip_reserved=True)}'
@@ -40,4 +42,6 @@ class Menu(object):
         self.get_menu(date=self.date, navigation=7)
     
     def getPrice(self, filters=[], skip_reserved=False):
+        if not (type(filters) is list):
+            raise
         return sum(x.getPrice(filters=filters, skip_reserved=skip_reserved) for x in self.days)

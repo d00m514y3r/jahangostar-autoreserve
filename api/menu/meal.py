@@ -28,7 +28,9 @@ class Meal(generalMenuObject):
         return 0
 
     def __str__(self, filters=[]):
-        return f"⏰ {self.meal_name}\n{'\n'.join(x.__str__(filters=filters) for x in self)}"
+        self_filters = [f for f in filters if f.type == "self"]
+        return f"⏰ {self.meal_name}\n{'\n'.join(
+            x.__str__(filters=self_filters) for x in self)}"
     
     def apply_filter(self, filters):
         new_food_menu = {}
