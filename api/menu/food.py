@@ -1,8 +1,12 @@
+import logging
+
 from .general import (
     generalMenuObject,
     Reservation,
     SelfService
 )
+
+logger = logging.getLogger(__name__)
 
 class Food(generalMenuObject):
     def __init__(self, parent_meal, obj):
@@ -21,17 +25,27 @@ class Food(generalMenuObject):
         self.children = {x["SelfId"]: SelfService(self, x) for x in obj["SelfMenu"]}
         self.self_count = len(self.children)
         
-    def __str__(self, filters):
+    def __str__(self, filters=[]):
         if filters:
-            for f in filters:
-                if not f.check(self):
-                    return "filtered"
+            if not self.check_filters(filters):
+                return 'filtered'
 
         emoji = {True: "✅", False: "❌"}
         return f"  {emoji[self.reservation]} {self.name}\n{"\n".join(map(str, self))}"
 
-    def getPrice(self):
+    def getPrice(self, filters):
+        if filters:
+            if not self.check_filters(filters):
+                return 0
         return max(x.price for x in self)
+    
+    def check_filters(self, filters):
+        for f in filters:
+            if not f.check(self):
+                return False
+        
+        return True
+
 
     # TODO: delete function or move to Meal
     def change_reservation(self, count, self_id):

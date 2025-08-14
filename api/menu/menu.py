@@ -1,6 +1,7 @@
 import logging
+import datetime
 from .day import Day
-
+from persiantools.jdatetime import JalaliDate, JalaliDateTime
 logger = logging.getLogger(__name__)
     
 class Menu(object):
@@ -15,8 +16,8 @@ class Menu(object):
     
     def __str__(self, filters=[]):
         return f'{"\n====================\n".join(x.__str__(filters=filters) for x in self)}\n\
-        total price: {self.getPrice()}\n\
-        remaining price: {self.getPrice(skip_reserved=True)}'
+        total price: {self.getPrice(filters=filters)}\n\
+        remaining price: {self.getPrice(filters=filters, skip_reserved=True)}'
     
     def __iter__(self):
         return iter(self.days)
@@ -33,10 +34,10 @@ class Menu(object):
         self.get_menu("", 0)
     
     def get_next_menu(self):
-        if not self.date:
-            # TODO: handle date not being set
-            return False
-        raise NotImplementedError
+        x = JalaliDateTime.now()
+        x -= datetime.timedelta(days=x.weekday())
+        self.date = x.strftime("%Y/%m/%d")
+        self.get_menu(date=self.date, navigation=7)
     
-    def getPrice(self, skip_reserved=False):
-        return sum(x.getPrice(skip_reserved=skip_reserved) for x in self.days)
+    def getPrice(self, filters=[], skip_reserved=False):
+        return sum(x.getPrice(filters=filters, skip_reserved=skip_reserved) for x in self.days)

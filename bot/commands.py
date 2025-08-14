@@ -40,9 +40,13 @@ class nextmenuCommandHandler(generalCommandHandlerClass):
         if not interface.menu:
             if interface.menu == None:
                 interface.generateMenu()
-            # TODO: get next week instead of current
         try:
-            await update.message.reply_text(f"{self.database.texts.NEXT_MENU}{interface.menu}")
+            interface.menu.get_next_menu()
+            keyboard = InlineKeyboardMarkup([[
+                InlineKeyboardButton("مشاهده منو با فیلترها", callback_data="menucommand_enablefilter")
+            ]])
+            await update.message.reply_text(f"{self.database.texts.NEXT_MENU}{interface.menu}",
+            reply_markup=keyboard)
         except Exception as e:
             await update.message.reply_text(f"{self.database.texts.NEXT_MENU_NOT_AVAILABLE}{e}")
 
@@ -62,23 +66,37 @@ class reserveallCommandHandler(generalCommandHandlerClass):
         super().__init__(database, "reserveall")
 
     async def reserveall(self, update, context, interface):
-        interface.generateMenu()
-        interface.menu.refresh_menu(date=interface.menu.current_date, navigation=7)
+        if not interface.menu:
+            if interface.menu == None:
+                interface.generateMenu()
+        try:
+            interface.menu.get_next_menu()
+        except Exception as e:
+            await update.message.reply_text(f"{self.database.texts.NEXT_MENU_NOT_AVAILABLE}{e}")
+
+        balance = int(interface.methods.getCredit())
+        menu_price = interface.menu.getPrice(skip_reserved=True, filters=context.user_data["filters"])
+        if menu_price > balance  :
+            await update.message.reply_text(f"insufficient balance. increase by {menu_price - balance}")
+            return
 
         res = []
         for day in interface.menu:
             for meal in day:
                 if meal.reservation:
-                    print(f"{meal.meal_id_week} was ignored because it was reserved")
                     continue
                 if meal.food_count != 1:
                     print(f"{meal.meal_id_week} was ignored because it had {meal.food_count} many food choices")
                     continue
                 
                 food = [x for x in meal.children.values()][0]
-                if food.self_count != 1:
-                    print(f"{meal.meal_id_week} was ignored because it didn't have a self-service choice")
+                if not food.check_filters(context.user_data["filters"]):
+                    print(f"food {food} was ignored because it didn't pass filters")
                     continue
+                if food.self_count != 1:
+                    print(f"{meal.meal_id_week} was ignored because it hade {food.self_count} many self-service choices")
+                    continue
+                
                 result = food.reserve([x for x in food.children.values()][0].id)
                 res.append(f"{result['ok']}: {food.parent}")
 

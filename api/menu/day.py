@@ -12,10 +12,10 @@ class Day(generalMenuObject):
         self.day_state_title = obj["DayStateTitle"]
         self.children = {i+1:Meal(self, meal) for i, meal in enumerate(obj["Meals"])}
     
-    def getPrice(self, skip_reserved):
-        return sum(x.getPrice(skip_reserved) for x in self)
+    def getPrice(self, skip_reserved, filters):
+        return sum(x.getPrice(skip_reserved, filters=filters) for x in self)
     
-    def __str__(self, filters):
+    def __str__(self, filters=[]):
         return f"🗓 {self.day_title}، {self.day_date}\n{'\n'.join(x.__str__(filters=filters) for x in self)}"
 
 

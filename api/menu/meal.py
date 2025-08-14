@@ -20,14 +20,14 @@ class Meal(generalMenuObject):
         self.children = {x["FoodId"]:Food(self, x) for x in obj["FoodMenu"]}
         self.food_count = len(self.children)
         
-    def getPrice(self, skip_reserved):
+    def getPrice(self, skip_reserved, filters):
         if self.food_count:
             if skip_reserved and self.reservation:
                 return 0
-            return max(food.getPrice() for food in self)
+            return max(food.getPrice(filters=filters) for food in self)
         return 0
 
-    def __str__(self, filters):
+    def __str__(self, filters=[]):
         return f"⏰ {self.meal_name}\n{'\n'.join(x.__str__(filters=filters) for x in self)}"
     
     def apply_filter(self, filters):
