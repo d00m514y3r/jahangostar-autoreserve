@@ -10,7 +10,7 @@ class dbClass(object):
             reader = csv.reader(csvfile)
             self.texts = Box({row[0]:row[1] for row in reader})
         
-        if not cursor.execute("PRAGMA table_info(users)").fetchall():
+        if not self.cursor.execute("PRAGMA table_info(users)").fetchall():
             self.create_tables()
     
     def create_user(self, user_id, name, self_username, self_password, is_verified, cookie):
