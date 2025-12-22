@@ -45,3 +45,30 @@ class Menu(object):
         if not (type(filters) is list):
             raise
         return sum(x.getPrice(filters=filters, skip_reserved=skip_reserved) for x in self.days)
+    
+    def reserve(self, filters=[]):
+        if not (type(filters) is list):
+            raise
+        p = self.getPrice(filters=filters, skip_reserved=True)
+        for day in self:
+            for meal in day:
+                if meal.reservation or meal.meal_state != 0:
+                    print(f"meal {meal} is reserved or inavtive")
+                f = None
+                s = None
+                for food in meal:
+                    s_list = food.check_filters(filters)
+                    if not s_list:
+                        print(f"food {food} or self services did not pass filters")
+                        continue 
+                    if len(s_list) != 1:
+                        print(f"more than one self service passed filters for food {food}")
+                        continue 
+                    if f != None:
+                        print(f"more than one food passed filters for meal {meal}")
+                        break
+                    f = food
+                    s = s_list[0]
+                else:
+                    x = f.reserve(s.id)
+                    print(f"attempted to reserve {food} with {s.id}. res: {x['ok']}")

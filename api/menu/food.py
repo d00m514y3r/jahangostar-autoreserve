@@ -49,7 +49,7 @@ class Food(generalMenuObject):
                 for s in self:
                     if f.check(s):
                         s_list.append(s)
-        return s_list
+        return len(s_list) == len(filters)
 
     # TODO: delete function or move to Meal
     def change_reservation(self, count, self_id):
