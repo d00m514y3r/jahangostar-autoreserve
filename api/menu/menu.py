@@ -29,7 +29,10 @@ class Menu(object):
     
     def get_menu(self, date, navigation):
         self.raw = self.http_client.apiGet("Reservation", params={"lastdate": date, "navigation": navigation}).json()
-        self.days = [Day(self, day) for day in self.raw]
+        self.days = []
+        for day in self.raw:
+            if x := Day(self, day):
+                self.days.append(x)
         self.date = self.days[0].day_date
     
     def get_current_menu(self):

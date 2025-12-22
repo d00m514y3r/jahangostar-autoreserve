@@ -32,6 +32,9 @@ class Meal(generalMenuObject):
         return f"⏰ {self.meal_name}\n{'\n'.join(
             x.__str__(filters=self_filters) for x in self)}"
     
+    def __bool__(self):
+        return bool(self.children)
+    
     def apply_filter(self, filters):
         new_food_menu = {}
         for food in self:
